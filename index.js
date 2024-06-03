@@ -93,7 +93,27 @@ async function run() {
         .send({ success: true });
     });
 
-    //crud operations for assignments
+    // User CRUD operations
+    const users = client.db('talent-syncro').collection('users');
+
+    app.get('/user', async (req, res) => {
+      const cursor = users.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.post('/user', async (req, res) => {
+      const newUser = req.body;
+      const result = await users.insertOne(newUser);
+      res.send(result);
+    })
+
+    app.delete('/user/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await users.deleteOne(query);
+      res.send(result);
+    })
     
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
