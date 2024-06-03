@@ -117,6 +117,26 @@ async function run() {
       res.send(result);
     });
 
+    // work sheet CRUD operations
+    const workSheets = client.db('talent-syncro').collection('work-sheet');
+    app.get('/work-sheet', async (req, res) => {
+      const cursor = workSheets.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.post('/work-sheet', async (req, res) => {
+      const newWorkSheets = req.body;
+      const result = await workSheets.insertOne(newWorkSheets);
+      res.send(result);
+    });
+
+    app.delete('/work-sheet/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await workSheets.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
