@@ -124,6 +124,13 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+    
+    app.get('/work-sheet/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await workSheets.find(query);
+      res.send(result);
+    });
 
     app.post('/work-sheet', async (req, res) => {
       const newWorkSheets = req.body;
