@@ -18,6 +18,7 @@ app.use(cors({
   credentials: true
 }));
 
+
 const logger = (req, res, next) => {
   console.log('log info: ', req.method, req.url);
   next();
@@ -46,7 +47,7 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.5sndi45.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6b1wars.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -69,29 +70,29 @@ async function run() {
     // await client.connect();
 
     //creating Token
-    app.post("/jwt", async (req, res) => {
-      try {
-        const user = req.body;
-        console.log("user for token", user);
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-          expiresIn: '1h'
-        });
+    // app.post("/jwt", async (req, res) => {
+    //   try {
+    //     const user = req.body;
+    //     console.log("user for token", user);
+    //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    //       expiresIn: '1h'
+    //     });
 
-        res.cookie("token", token, cookieOptions)
-          .send({ success: true });
-      } catch (error) {
-        res.status(500).send({ success: false })
-      }
-    });
+    //     res.cookie("token", token, cookieOptions)
+    //       .send({ success: true });
+    //   } catch (error) {
+    //     res.status(500).send({ success: false })
+    //   }
+    // });
 
-    //clearing Token
-    app.post("/logout", async (req, res) => {
-      const user = req.body;
-      console.log("logging out", user);
-      res
-        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
-        .send({ success: true });
-    });
+    // //clearing Token
+    // app.post("/logout", async (req, res) => {
+    //   const user = req.body;
+    //   console.log("logging out", user);
+    //   res
+    //     .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+    //     .send({ success: true });
+    // });
 
     // User CRUD operations
     const users = client.db('talent-syncro').collection('users');
@@ -100,21 +101,23 @@ async function run() {
       const cursor = users.find();
       const result = await cursor.toArray();
       res.send(result);
-    })
+    });
 
     app.post('/user', async (req, res) => {
       const newUser = req.body;
+      console.log("New user: ", newUser);
       const result = await users.insertOne(newUser);
       res.send(result);
-    })
+    });
 
     app.delete('/user/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
+      const query = { _id: new ObjectId(id) };
       const result = await users.deleteOne(query);
       res.send(result);
-    })
-    
+    });
+
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
