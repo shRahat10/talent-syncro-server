@@ -104,11 +104,35 @@ async function run() {
     });
 
     app.post('/user', async (req, res) => {
-      const newUser = req.body;
-      console.log("New user: ", newUser);
-      const result = await users.insertOne(newUser);
-      res.send(result);
+      try {
+        const newUser = req.body;
+        console.log("New user: ", newUser);
+        const existingUser = await users.findOne({ email: newUser.email });
+
+        if (existingUser) {
+          res.status(400).send({ message: "Email already in use" });
+        } else {
+          const result = await users.insertOne(newUser);
+          res.send(result);
+        }
+      } catch (error) {
+        console.error("Error inserting user: ", error);
+        res.status(500).send({ message: "An error occurred while inserting the user" });
+      }
     });
+
+    app.put('/user/:id', (req, res) => {
+      const id = req.params.id;
+      const { isVarified } = req.body;
+      const employee = users.find(e => e._id === id);
+      if (employee) {
+        employee.isVarified = isVarified;
+        res.json(employee);
+      } else {
+        res.status(404).json({ message: 'Employee not found' });
+      }
+    });
+
 
     app.delete('/user/:id', async (req, res) => {
       const id = req.params.id;
@@ -124,11 +148,11 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
-    
-    app.get('/work-sheet/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await workSheets.find(query);
+
+    app.get('/work-sheet/:userId', async (req, res) => {
+      const userId = req.params.userId;
+      const query = { userId: userId };
+      const result = await workSheets.find(query).toArray();
       res.send(result);
     });
 
