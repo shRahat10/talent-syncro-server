@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@tanstack/react-table": "^8.17.3",
     "axios": "^1.7.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

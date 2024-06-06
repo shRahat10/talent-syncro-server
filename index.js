@@ -103,6 +103,21 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/user/:email', async (req, res) => {
+      try {
+        const email = req.params.email;
+        const user = await users.findOne({ email: email });
+
+        if (!user) {
+          return res.status(404).send({ message: "User not found" });
+        }
+        res.send(user);
+      }
+      catch (error) {
+        res.status(500).send({ message: "An error occurred", error: error.message });
+      }
+    });
+
     app.post('/user', async (req, res) => {
       try {
         const newUser = req.body;
@@ -121,17 +136,25 @@ async function run() {
       }
     });
 
-    app.put('/user/:id', (req, res) => {
-      const id = req.params.id;
-      const { isVarified } = req.body;
-      const employee = users.find(e => e._id === id);
-      if (employee) {
-        employee.isVarified = isVarified;
-        res.json(employee);
-      } else {
-        res.status(404).json({ message: 'Employee not found' });
+    app.put('/user/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const { isVerified } = req.body;
+        const query = { _id: new ObjectId(id) };
+        const update = { $set: { isVerified } };
+        const result = await users.updateOne(query, update);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        res.json({ message: 'Employee verification updated successfully' });
+      } catch (error) {
+        console.error('Error updating employee verification:', error);
+        res.status(500).json({ message: 'An error occurred while updating employee verification' });
       }
     });
+
 
 
     app.delete('/user/:id', async (req, res) => {
