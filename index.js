@@ -192,6 +192,28 @@ async function run() {
       res.send(result);
     });
 
+    // payment history CRUD operations
+    const payments = client.db('talent-syncro').collection('payment');
+
+    app.get('/payment', async (req, res) => {
+      const cursor = payments.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.post('/payment', async (req, res) => {
+      const newPayment = req.body;
+      const result = await payments.insertOne(newPayment);
+      res.send(result);
+    });
+
+    app.delete('/payment/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await payments.deleteOne(query);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
