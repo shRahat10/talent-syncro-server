@@ -201,6 +201,26 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/payment/:id', async (req, res) => {
+      const employeeId = req.params.id;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 5;
+
+      try {
+        const query = { employeeId: employeeId };
+        const cursor = payments.find(query).sort({ date: 1 }); // Sort by date in ascending order
+        const total = await cursor.count();
+        const result = await cursor.skip((page - 1) * limit).limit(limit).toArray();
+
+        res.send({
+          history: result,
+          total
+        });
+      } catch (error) {
+        res.status(500).send({ error: 'An error occurred while fetching payment history' });
+      }
+    });
+
     app.post('/payment', async (req, res) => {
       const newPayment = req.body;
       const result = await payments.insertOne(newPayment);
