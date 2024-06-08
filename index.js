@@ -202,13 +202,15 @@ async function run() {
     app.get('/payment/:id', async (req, res) => {
       const employeeId = req.params.id;
       const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 5;
+      const limit = parseInt(req.query.limit) || 0;
 
       try {
         const query = { employeeId: employeeId };
         const cursor = payments.find(query).sort({ date: 1 });
-        const total = await cursor.count();
-        const result = await cursor.skip((page - 1) * limit).limit(limit).toArray();
+
+        const result = limit > 0 ? await cursor.skip((page - 1) * limit).limit(limit).toArray() : await cursor.toArray();
+
+        const total = await payments.countDocuments(query);
 
         res.send({
           history: result,
@@ -218,6 +220,7 @@ async function run() {
         res.status(500).send({ error: 'An error occurred while fetching payment history' });
       }
     });
+
 
     app.post('/payment', async (req, res) => {
       const newPayment = req.body;
