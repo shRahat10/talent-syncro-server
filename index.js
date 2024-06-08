@@ -164,11 +164,38 @@ async function run() {
 
     // work sheet CRUD operations
     const workSheets = client.db('talent-syncro').collection('work-sheet');
+
     app.get('/work-sheet', async (req, res) => {
-      const cursor = workSheets.find();
-      const result = await cursor.toArray();
-      res.send(result);
-    });
+      const { name, month } = req.query;
+      const query = {};
+  
+      if (name) {
+          query.name = name;
+      }
+  
+      if (month) {
+          const start = new Date(`${month}-01T00:00:00.000Z`);
+          const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+          query.date = {
+              $gte: start.toISOString(),
+              $lt: end.toISOString()
+          };
+          console.log("Month filter applied. Start:", start, "End:", end);
+      }
+  
+      console.log("Query:", JSON.stringify(query));
+  
+      try {
+          const cursor = workSheets.find(query);
+          const result = await cursor.toArray();
+          console.log("Result:", result);
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching worksheets:", error);
+          res.status(500).send({ message: "An error occurred while fetching worksheets." });
+      }
+  });
+  
 
     app.get('/work-sheet/:userId', async (req, res) => {
       const userId = req.params.userId;
