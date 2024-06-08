@@ -155,8 +155,6 @@ async function run() {
       }
     });
 
-
-
     app.delete('/user/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -208,7 +206,7 @@ async function run() {
 
       try {
         const query = { employeeId: employeeId };
-        const cursor = payments.find(query).sort({ date: 1 }); // Sort by date in ascending order
+        const cursor = payments.find(query).sort({ date: 1 });
         const total = await cursor.count();
         const result = await cursor.skip((page - 1) * limit).limit(limit).toArray();
 
