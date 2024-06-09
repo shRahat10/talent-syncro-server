@@ -174,6 +174,21 @@ async function run() {
       res.send(result);
     });
 
+    // banne user CRUD operations
+    const bannedUsers = client.db('talent-syncro').collection('banned-users');
+
+    app.get('/banned-user', async (req, res) => {
+      const cursor = bannedUsers.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.post('/banned-user', async (req, res) => {
+      const newBannedUser = req.body;
+      const result = await bannedUsers.insertOne(newBannedUser);
+      res.send(result);
+    });
+
 
     // work sheet CRUD operations
     const workSheets = client.db('talent-syncro').collection('work-sheet');
