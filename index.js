@@ -139,19 +139,31 @@ async function run() {
     app.put('/user/:id', async (req, res) => {
       try {
         const id = req.params.id;
-        const { isVerified } = req.body;
-        const query = { _id: new ObjectId(id) };
-        const update = { $set: { isVerified } };
-        const result = await users.updateOne(query, update);
+        const { isVerified, role } = req.body;
 
-        if (result.matchedCount === 0) {
-          return res.status(404).json({ message: 'Employee not found' });
+        const existingUser = await users.findOne({ _id: new ObjectId(id) });
+        if (!existingUser) {
+          return res.status(404).json({ message: 'User not found' });
         }
 
-        res.json({ message: 'Employee verification updated successfully' });
+        const update = { $set: {} };
+        if (isVerified !== undefined) update.$set.isVerified = isVerified;
+        if (role !== undefined) update.$set.role = role;
+
+        if (isVerified === undefined) {
+          update.$set.isVerified = existingUser.isVerified;
+        }
+
+        const result = await users.updateOne({ _id: new ObjectId(id) }, update);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User updated successfully' });
       } catch (error) {
-        console.error('Error updating employee verification:', error);
-        res.status(500).json({ message: 'An error occurred while updating employee verification' });
+        console.error('Error updating user:', error);
+        res.status(500).json({ message: 'An error occurred while updating user' });
       }
     });
 
@@ -162,40 +174,41 @@ async function run() {
       res.send(result);
     });
 
+
     // work sheet CRUD operations
     const workSheets = client.db('talent-syncro').collection('work-sheet');
 
     app.get('/work-sheet', async (req, res) => {
       const { name, month } = req.query;
       const query = {};
-  
+
       if (name) {
-          query.name = name;
+        query.name = name;
       }
-  
+
       if (month) {
-          const start = new Date(`${month}-01T00:00:00.000Z`);
-          const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
-          query.date = {
-              $gte: start.toISOString(),
-              $lt: end.toISOString()
-          };
-          console.log("Month filter applied. Start:", start, "End:", end);
+        const start = new Date(`${month}-01T00:00:00.000Z`);
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+        query.date = {
+          $gte: start.toISOString(),
+          $lt: end.toISOString()
+        };
+        console.log("Month filter applied. Start:", start, "End:", end);
       }
-  
+
       console.log("Query:", JSON.stringify(query));
-  
+
       try {
-          const cursor = workSheets.find(query);
-          const result = await cursor.toArray();
-          console.log("Result:", result);
-          res.send(result);
+        const cursor = workSheets.find(query);
+        const result = await cursor.toArray();
+        console.log("Result:", result);
+        res.send(result);
       } catch (error) {
-          console.error("Error fetching worksheets:", error);
-          res.status(500).send({ message: "An error occurred while fetching worksheets." });
+        console.error("Error fetching worksheets:", error);
+        res.status(500).send({ message: "An error occurred while fetching worksheets." });
       }
-  });
-  
+    });
+
 
     app.get('/work-sheet/:userId', async (req, res) => {
       const userId = req.params.userId;
