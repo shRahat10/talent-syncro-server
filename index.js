@@ -139,7 +139,7 @@ async function run() {
     app.put('/user/:id', async (req, res) => {
       try {
         const id = req.params.id;
-        const { isVerified, role } = req.body;
+        const { isVerified, role, status } = req.body;
 
         const existingUser = await users.findOne({ _id: new ObjectId(id) });
         if (!existingUser) {
@@ -149,6 +149,7 @@ async function run() {
         const update = { $set: {} };
         if (isVerified !== undefined) update.$set.isVerified = isVerified;
         if (role !== undefined) update.$set.role = role;
+        if (status !== undefined) update.$set.status = status;
 
         if (isVerified === undefined) {
           update.$set.isVerified = existingUser.isVerified;
