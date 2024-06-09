@@ -250,6 +250,7 @@ async function run() {
 
     // payment history CRUD operations
     const payments = client.db('talent-syncro').collection('payment');
+    payments.createIndex({ monthYear: 1 }, { unique: true });
 
     app.get('/payment', async (req, res) => {
       const cursor = payments.find();
@@ -279,11 +280,32 @@ async function run() {
       }
     });
 
-
     app.post('/payment', async (req, res) => {
       const newPayment = req.body;
-      const result = await payments.insertOne(newPayment);
-      res.send(result);
+      const employeeId = newPayment.employeeId;
+      const paymentDate = new Date(newPayment.date);
+      const monthYear = `${paymentDate.getFullYear()}-${paymentDate.getMonth() + 1}`;
+
+      newPayment.monthYear = monthYear;
+
+      try {
+        const existingPayment = await payments.findOne({
+          employeeId: employeeId,
+          monthYear: monthYear
+        });
+
+        if (existingPayment) {
+          return res.status(400).send({ error: 'User already paid in this month' });
+        }
+
+        const result = await payments.insertOne(newPayment);
+        res.send(result);
+      } catch (error) {
+        if (error.code === 11000) {
+          return res.status(400).send({ error: 'User already paid in this month' });
+        }
+        res.status(500).send({ error: 'An error occurred while creating the payment' });
+      }
     });
 
     app.delete('/payment/:id', async (req, res) => {
@@ -293,7 +315,7 @@ async function run() {
       res.send(result);
     });
 
-    // payment intent
+    // stripe payment intent
     app.post('/create-payment-intent', async (req, res) => {
       const { salary } = req.body;
 
