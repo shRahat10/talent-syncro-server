@@ -250,7 +250,8 @@ async function run() {
 
     // payment history CRUD operations
     const payments = client.db('talent-syncro').collection('payment');
-    payments.createIndex({ monthYear: 1 }, { unique: true });
+    payments.createIndex({ employeeId: 1, monthYear: 1 }, { unique: true });
+
 
     app.get('/payment', async (req, res) => {
       const cursor = payments.find();
