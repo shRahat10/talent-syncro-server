@@ -27,7 +27,7 @@ const logger = (req, res, next) => {
 };
 
 const verifyToken = (req, res, next) => {
-  console.log(req.headers.Authorization);
+  console.log(req.headers.authorization);
   if (!req.headers.authorization) {
     return res.status(401).send({ message: 'Unauthorized access' });
   }
@@ -110,13 +110,13 @@ async function run() {
     // User CRUD operations
     const users = client.db('talent-syncro').collection('users');
 
-    app.get('/user', async (req, res) => {
+    app.get('/user', verifyToken, async (req, res) => {
       const cursor = users.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    app.get('/user/:email', async (req, res) => {
+    app.get('/user/:email', verifyToken, async (req, res) => {
       try {
         const email = req.params.email;
         const user = await users.findOne({ email: email });
@@ -149,7 +149,7 @@ async function run() {
       }
     });
 
-    app.put('/user/:id', async (req, res) => {
+    app.put('/user/:id', verifyToken, async (req, res) => {
       try {
         const id = req.params.id;
         const { isVerified, role, status, salary } = req.body;
@@ -182,7 +182,7 @@ async function run() {
       }
     });
 
-    app.delete('/user/:id', async (req, res) => {
+    app.delete('/user/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await users.deleteOne(query);
@@ -198,7 +198,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/banned-user', async (req, res) => {
+    app.post('/banned-user', verifyToken, async (req, res) => {
       const newBannedUser = req.body;
       const result = await bannedUsers.insertOne(newBannedUser);
       res.send(result);
@@ -208,7 +208,7 @@ async function run() {
     // work sheet CRUD operations
     const workSheets = client.db('talent-syncro').collection('work-sheet');
 
-    app.get('/work-sheet', async (req, res) => {
+    app.get('/work-sheet', verifyToken, async (req, res) => {
       const { name, month } = req.query;
       const query = {};
 
@@ -240,20 +240,20 @@ async function run() {
     });
 
 
-    app.get('/work-sheet/:userId', async (req, res) => {
+    app.get('/work-sheet/:userId', verifyToken, async (req, res) => {
       const userId = req.params.userId;
       const query = { userId: userId };
       const result = await workSheets.find(query).toArray();
       res.send(result);
     });
 
-    app.post('/work-sheet', async (req, res) => {
+    app.post('/work-sheet', verifyToken, async (req, res) => {
       const newWorkSheets = req.body;
       const result = await workSheets.insertOne(newWorkSheets);
       res.send(result);
     });
 
-    app.delete('/work-sheet/:id', async (req, res) => {
+    app.delete('/work-sheet/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await workSheets.deleteOne(query);
@@ -265,13 +265,13 @@ async function run() {
     payments.createIndex({ employeeId: 1, monthYear: 1 }, { unique: true });
 
 
-    app.get('/payment', async (req, res) => {
+    app.get('/payment', verifyToken, async (req, res) => {
       const cursor = payments.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    app.get('/payment/:id', async (req, res) => {
+    app.get('/payment/:id', verifyToken, async (req, res) => {
       const employeeId = req.params.id;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 0;
@@ -293,7 +293,7 @@ async function run() {
       }
     });
 
-    app.post('/payment', async (req, res) => {
+    app.post('/payment', verifyToken, async (req, res) => {
       const newPayment = req.body;
       const employeeId = newPayment.employeeId;
       const paymentDate = new Date(newPayment.date);
@@ -321,7 +321,7 @@ async function run() {
       }
     });
 
-    app.delete('/payment/:id', async (req, res) => {
+    app.delete('/payment/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await payments.deleteOne(query);
@@ -353,6 +353,20 @@ async function run() {
       }
     });
 
+    // contact us CRUD
+    const contactUs = client.db('talent-syncro').collection('contact-us');
+
+    app.get('/contact-us',verifyToken, async (req, res) => {
+      const cursor = contactUs.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.post('/contact-us', async (req, res) => {
+      const newContactUs = req.body;
+      const result = await contactUs.insertOne(newContactUs);
+      res.send(result);
+    });
 
 
 
