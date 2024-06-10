@@ -16,6 +16,8 @@ app.use(cookieParser());
 app.use(cors({
   origin: [
     'http://localhost:5173',
+    'http://talent-syncro.web.app',
+    'http://talent-syncro.firebaseapp.com',
   ],
   credentials: true
 }));
