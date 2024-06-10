@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-require('dotenv').config()
+require('dotenv').config();
+
 const app = express();
 const port = process.env.PORT || 5000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -23,22 +24,26 @@ app.use(cors({
 const logger = (req, res, next) => {
   console.log('log info: ', req.method, req.url);
   next();
-}
+};
 
 const verifyToken = (req, res, next) => {
-  const token = req.cookies?.token
-  console.log('token verify', token);
-  if (!token) {
-    return res.status(401).send({ message: 'unauthorized access' })
+  console.log(req.headers.Authorization);
+  if (!req.headers.authorization) {
+    return res.status(401).send({ message: 'Unauthorized access' });
   }
+  const token = req?.headers.authorization?.split(' ')[1];
+
+  console.log('Token verify:', token);
+
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(401).send({ message: 'unauthorized access' })
+      return res.status(401).send({ message: 'Unauthorized access' });
     }
     req.user = decoded;
     next();
-  })
-}
+  });
+};
+
 //===========
 
 
@@ -48,6 +53,9 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
+
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6b1wars.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -59,41 +67,45 @@ const client = new MongoClient(uri, {
   }
 });
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-};
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    //creating Token
-    // app.post("/jwt", async (req, res) => {
-    //   try {
-    //     const user = req.body;
-    //     console.log("user for token", user);
-    //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-    //       expiresIn: '1h'
-    //     });
+    // creating Token
+    app.post("/jwt", async (req, res) => {
+      try {
+        const { email } = req.body;
+        console.log("User for token:", email);
 
-    //     res.cookie("token", token, cookieOptions)
-    //       .send({ success: true });
-    //   } catch (error) {
-    //     res.status(500).send({ success: false })
-    //   }
-    // });
+        const user = await users.findOne({ email });
 
-    // //clearing Token
-    // app.post("/logout", async (req, res) => {
-    //   const user = req.body;
-    //   console.log("logging out", user);
-    //   res
-    //     .clearCookie("token", { ...cookieOptions, maxAge: 0 })
-    //     .send({ success: true });
-    // });
+        if (!user) {
+          console.log("User not found");
+          return res.status(404).send({ message: "User not found" });
+        }
+
+        const token = jwt.sign({ email: user.email, role: user.role }, process.env.ACCESS_TOKEN_SECRET, {
+          expiresIn: '1h'
+        });
+
+        console.log("Generated token:", token);
+
+        res.send({ token, success: true });
+      } catch (error) {
+        console.error("Error generating token:", error);
+        res.status(500).send({ success: false, message: error.message });
+      }
+    });
+
+    // clearing Token
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      console.log("logging out", user);
+      res.send({ success: true });
+    });
+
 
     // User CRUD operations
     const users = client.db('talent-syncro').collection('users');
@@ -177,7 +189,7 @@ async function run() {
       res.send(result);
     });
 
-    // banne user CRUD operations
+    // banned user CRUD operations
     const bannedUsers = client.db('talent-syncro').collection('banned-users');
 
     app.get('/banned-user', async (req, res) => {
